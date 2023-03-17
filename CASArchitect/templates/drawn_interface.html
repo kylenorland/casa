@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<meta charset="UTF-8">
+		<title>CASArchitect</title>
+		<link rel = "stylesheet" type="text/css" href="/static/stylesheets/bootstrap.min.css">
+		<link rel = "stylesheet" type="text/css" href="/static/stylesheets/additional.css">
+		<script src="/static/scripts/jquery-3.4.1.min.js" defer></script>
+		<script src="/static/scripts/bootstrap.bundle.js" defer></script>
+		<script src="/static/scripts/landing_page.js" defer></script>
+		<script src="/static/scripts/cycle.js" defer></script>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+	</head>
+
+	<body class="musicPage">
+		<!--Nav Bar-->
+		<nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+		  <a class="navbar-brand" href="startPage.html">CASArchitect V2.0--By Kyle Norland</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		  </button>
+		  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+			  <a class="nav-item nav-link active" href="landingPage.html">Build Screen</a>
+			</div>
+		  </div>
+		</nav>
+
+
+		<!-- -------------------------------------------------- >
+		<!-- -................Controls Command------------------->
+		<!-- -------------------------------------------------->
+		<div id="controlContainer" class="container-fluid py-2 ml-5 mr-5">
+
+			<!--Start and stop-->
+			<div class="row py-2">
+				<div class="col-12">
+					<button type="button" id="startDrawioListener" class="btn btn-primary">Start Drawio Listener</button>
+					<button type="button" id="startDrawioListener" class="btn btn-primary">Stop Drawio Listener</button>
+					<button type="button" id="pushButton" class="btn btn-primary">Push System</button>
+					<button type="button" id="runButton" class="btn btn-success">Run System</button>
+					<button type="button" id="stopButton" class="btn btn-danger">Stop System</button>
+				</div>
+			</div>
+
+			<!--Run time controller-->
+			<div class="row py-2">
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="runTimeTextbox">Run Time</label>
+						<input class="form-control input-lg" name="runTimeTextbox" id="runTimeTextbox" value="1000" type="text">
+					</div>
+				</div>
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="saveName">Save Name</label>
+						<input class="form-control input-lg" name="saveName" id="saveName" value="saveOne.txt" type="text">
+					</div>
+				</div>
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="loadName">Load Name</label>
+						<input class="form-control input-lg" name="loadName" id="loadName" value="saveOne.txt" type="text">
+					</div>
+				</div>
+			</div>
+
+
+
+			<!--Button Control Panel-->
+			<div class="row">
+				<div class="col-12">
+					<button type="button" id="scanButton" class="btn btn-primary">Scan Sensors</button>
+					<button type="button" id="scanComputersButton" class="btn btn-primary">Scan Computers</button>
+				</div>
+			</div>
+
+		</div>
+	</body>
+
+
+</html>

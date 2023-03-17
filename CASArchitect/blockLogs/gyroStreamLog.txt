@@ -1,0 +1,8 @@
+time.struct_time(tm_year=2020, tm_mon=12, tm_mday=9, tm_hour=15, tm_min=45, tm_sec=4, tm_wday=2, tm_yday=344, tm_isdst=0)There are 4 arguments
+E8:84:12:C0:33:40
+15:45:04.997301
+Connecting to E8:84:12:C0:33:40
+Connected to E8:84:12:C0:33:40
+Connected to E8:84:12:C0:33:40
+15:45:14.283996
+Configuring deviceBuzzing at :1607557518.5519147Buzzing at :1607557520.7388325Buzzing at :1607557522.869697Buzzing at :1607557524.8000119Buzzing at :1607557526.6596692Disconnected

@@ -1,0 +1,14 @@
+[Unit]
+Description=Citizen Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u /home/pi/Desktop/CASArchitect/citizenServer.py
+WorkingDirectory=/home/pi/Desktop/CASArchitect
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

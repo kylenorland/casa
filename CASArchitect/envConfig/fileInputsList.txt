@@ -1,0 +1,1 @@
+{"inputs": [{"name": "patientData.csv", "leftPorts": 0, "rightPorts": 1, "filePath": "inputFiles/patientData.csv"}, {"name": "secondTestInput.csv", "leftPorts": 0, "rightPorts": 1, "filePath": "inputFiles/secondTestInput.csv"}, {"name": "testInput.csv", "leftPorts": 0, "rightPorts": 1, "filePath": "inputFiles/testInput.csv"}]}

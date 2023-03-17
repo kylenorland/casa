@@ -1,0 +1,9 @@
+#This config file will allow the citizenServer to know some basic details about itself.
+
+example:
+computerType: fullComputer
+OS: Linux
+Machine: Raspberry Pi 3
+
+Installed Software:
+metawear

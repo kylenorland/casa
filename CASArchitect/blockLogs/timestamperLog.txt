@@ -1,0 +1,17 @@
+time.struct_time(tm_year=2020, tm_mon=10, tm_mday=13, tm_hour=19, tm_min=41, tm_sec=51, tm_wday=1, tm_yday=287, tm_isdst=1)There are 4 arguments
+Subscribing to: 6
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643316.9691455'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.8', 'timestamp': '1602643316.9693296'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643316.9695222'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643318.5430694'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.8', 'timestamp': '1602643318.5432346'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643318.543587'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643319.7901268'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.8', 'timestamp': '1602643319.7904587'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643319.7911167'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643322.606954'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.8', 'timestamp': '1602643322.6071615'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643322.6073387'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643324.6225076'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.8', 'timestamp': '1602643324.622647'}
+{'On': '1', 'Off': '0', 'Amplitude': '0.5', 'timestamp': '1602643324.622856'}

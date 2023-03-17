@@ -1,0 +1,8 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Citizen Server
+Comment=Launches CASA Citizen Server
+Exec=python3 /home/kyle/Desktop/CASArchitect/citizen/citizenServer.py
+Terminal=true
+Type=Application
+Icon=/home/kyle/Desktop/CASArchitect/icons/citizenIcon.png

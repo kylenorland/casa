@@ -1,0 +1,32 @@
+pip3 download -r requirements.txt
+
+https://stackoverflow.com/questions/11091623/how-to-install-packages-offline
+
+pip freeze > requirements.txt
+
+#Install to immediate folder
+pip3 download -r requirements.txt
+
+#Install to specific folder
+
+
+#I ended up doing the downloading on a raspberry pi so that all the files would be correct
+
+#For python download, then run
+pip3 install -r wheelhouse/requirements.txt --no-index --find-links wheelhouse
+
+#Offline apt-get downloads
+Used a working raspberry pi again.
+sudo apt-get -y install bluetooth libbluetooth-dev libudev-dev libboost-all-dev build-essential -qq --print-uris | cut -d\' -f2 > offlineFiles.txt
+
+Then, got all of them with:
+wget -i offlineFiles.txt -P TARGET_DIRECTORY_YOU_WANT
+
+Install them
+cd ~/Downloads/deb_files   # example
+
+sudo dpkg -i *.deb
+
+Based on this, with the above modification for the apt-get and screen.
+https://www.pcsuggest.com/apt-generate-package-download-list/
+

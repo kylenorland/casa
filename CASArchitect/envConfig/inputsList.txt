@@ -1,0 +1,66 @@
+{
+    "inputs": [
+    {
+        "name":"buttonOne",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonTwo",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonThree",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonFour",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonFive",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonSix",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonSeven",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonEight",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonNine",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    },
+    {
+        "name":"buttonTen",
+        "type":"input",
+        "leftPorts":0,
+        "rightPorts":1
+    }
+
+    ]
+
+}

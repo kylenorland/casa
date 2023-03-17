@@ -1,0 +1,4 @@
+pip3 download -r requirements.txt -d windows_python
+pip3 download -r requirements.txt --extra-index-url https://www.piwheels.org/simple -d raspbian_python
+
+python3 -m pip download --extra-index-url https://www.piwheels.org/simple --only-binary=:all: --implementation cp --platform linux_armv7l --abi cp37m --only-binary=:all: <package>

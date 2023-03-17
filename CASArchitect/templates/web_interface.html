@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<meta charset="UTF-8">
+		<title>CASArchitect</title>
+		<link rel = "stylesheet" type="text/css" href="/static/stylesheets/bootstrap.min.css">
+		<link rel = "stylesheet" type="text/css" href="/static/stylesheets/additional.css">
+		<script src="/static/scripts/jquery-3.4.1.min.js" defer></script>
+		<script src="/static/scripts/bootstrap.bundle.js" defer></script>
+		<script src="/static/scripts/testbed.js" defer></script>
+		<script src="/static/scripts/cycle.js" defer></script>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+	</head>
+
+	<body class="musicPage">
+		<!--Nav Bar-->
+		<nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+		  <a class="navbar-brand" href="startPage.html">CASArchitect V2.0--By Kyle Norland</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		  </button>
+		  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+			  <a class="nav-item nav-link active" href="landingPage.html">Build Screen</a>
+			</div>
+		  </div>
+		</nav>
+
+
+		<!-- -------------------------------------------------- >
+		<!-- -................Controls Command------------------->
+		<!-- -------------------------------------------------->
+		<div id="controlContainer" class="container-fluid py-2 ml-5 mr-5">
+
+			<!--Start and stop-->
+			<div class="row py-2">
+				<div class="col-12">
+					<button type="button" id="pushButton" class="btn btn-primary">Push System</button>
+					<button type="button" id="runButton" class="btn btn-success">Run System</button>
+					<button type="button" id="stopButton" class="btn btn-danger">Stop System</button>
+				</div>
+			</div>
+
+			<!--Run time controller-->
+			<div class="row py-2">
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="runTimeTextbox">Run Time</label>
+						<input class="form-control input-lg" name="runTimeTextbox" id="runTimeTextbox" value="1000" type="text">
+					</div>
+				</div>
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="saveName">Save Name</label>
+						<input class="form-control input-lg" name="saveName" id="saveName" value="saveOne.txt" type="text">
+					</div>
+				</div>
+				<div class="col-4">
+					<div class="form-inline">
+						<label for="loadName">Load Name</label>
+						<input class="form-control input-lg" name="loadName" id="loadName" value="saveOne.txt" type="text">
+					</div>
+				</div>
+			</div>
+
+
+
+			<!--Button Control Panel-->
+			<div class="row">
+				<div class="col-12">
+					<button type="button" id="scanButton" class="btn btn-primary">Scan Sensors</button>
+					<button type="button" id="scanComputersButton" class="btn btn-primary">Scan Computers</button>
+					<button type="button" id="refreshBlocksButton" class="btn btn-primary">Refresh Blocks</button>
+					<button type="button" id="getSensorsButton" class="btn btn-primary">Get Sensors</button>
+					<button type="button" id="getBlocksButton" class="btn btn-primary">Get Blocks</button>
+					<button type="button" id="getComputersButton" class="btn btn-primary">Get Computers</button>
+					<button type="button" id="getInputsButton" class="btn btn-primary">Get Inputs</button>
+					<button type="button" id="getFileInputsButton" class="btn btn-primary">Get File Inputs</button>
+					<button type="button" id="getFileOutputsButton" class="btn btn-primary">Get File Outputs</button>
+					<button type="button" id="clearButton" class="btn btn-primary">Clear Diagram</button>
+					<button type="button" id="saveButton" class="btn btn-primary">Save Diagram</button>
+					<button type="button" id="loadButton" class="btn btn-primary">Load Diagram</button>
+					<button type="button" id="reorderButton" class="btn btn-primary">Reorder</button>
+				</div>
+			</div>
+
+		</div>
+
+
+		<!-- -------------------------------------------------- >
+		<!-- -................Canvas Section------------------->
+		<!-- -------------------------------------------------->
+		<!--
+		<div class = "row">
+				<ul class="list-group overflow-auto mh-50">
+				  <li class="list-group-item active">Cras justo odio</li>
+				  <li class="list-group-item">Dapibus ac facilisis in</li>
+				  <li class="list-group-item">Morbi leo risus</li>
+				  <li class="list-group-item">Porta ac consectetur ac</li>
+				  <li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Porta ac consectetur ac</li>
+					<li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Porta ac consectetur ac</li>
+					<li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Porta ac consectetur ac</li>
+					<li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Porta ac consectetur ac</li>
+					<li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+					<li class="list-group-item">Porta ac consectetur ac</li>
+					<li class="list-group-item">Vestibulum at eros</li>
+					<li class="list-group-item">Dapibus ac facilisis in</li>
+					<li class="list-group-item">Morbi leo risus</li>
+				</ul>
+			</div>
+			-->
+
+			<div id="canvasContainer" class="container ml-5 mr-5">
+				<canvas id="mainCanvas" width="3000" height="2000" style="border:1px solid #000000;"></canvas>
+			</div>
+
+
+
+
+
+
+	</body>
+
+
+</html>

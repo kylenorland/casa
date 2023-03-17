@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Run Control Server
+Comment=Launches CASA Control Server
+Exec=python3 /home/kyle/Desktop/CASArchitect/testBedServer.py
+Terminal=true
+Type=Application
+Icon=/home/kyle/Desktop/CASArchitect/icons/userIcon.png
