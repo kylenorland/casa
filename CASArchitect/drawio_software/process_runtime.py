@@ -109,6 +109,7 @@ if __name__ == "__main__":
     #------------------------------------------------------------------
     
     #Simple blocks (block name is value
+    print("-"*10)
     print("Starting Up Blocks")
     for vertex in code_tree['vertices']:
         #Check if block exists
@@ -183,7 +184,8 @@ if __name__ == "__main__":
 
         #Update the time;
         currentTime = time.time()
-        
+    
+    print("-"*10)
     print("Stopping processes")
     for process_dict in running_processes:
         process_dict['process'].terminate()

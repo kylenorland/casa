@@ -28,7 +28,7 @@ class ButtonObj():
 
     def buttonHandler(self):
         print("Button Clicked")
-        self.outMessages.appendleft({"tag":self.id, "signal": {'tag': 'step_request', 'signal': {'value':1}}})
+        self.outMessages.appendleft({"tag":self.id, "signal": {'tag': 'start_run', 'signal': {'value':1}}})
 
     def handleMessage(self, message):
         if message['tag'] in self.inputs:
@@ -93,7 +93,15 @@ class Gui_Container:
                 newObject = ButtonObj(vertex, self.gMQ)
                 
                 #self.app should attach it to generated window
-                newButton = Button(self.app, text=vertex['value'], command = newObject.buttonHandler, width = int(float(vertex['width']) * 1/6) , height = int(float(vertex['height']) * 1/14))
+                newButton = Button(
+                self.app, 
+                text=vertex['value'], 
+                command = newObject.buttonHandler, 
+                width = int(float(vertex['width']) * 1/6) , 
+                height = int(float(vertex['height']) * 1/14),
+                background='#00BFFF',
+                )
+                
                 newButton.place(x=int(vertex['x']), y=int(vertex['y']))
                 newObject.button = newButton
                 self.objectList.append(newObject)
@@ -115,8 +123,11 @@ class Gui_Container:
             '''  
                 
         #Other tkinter
-        self.root.wm_title("Autogen Front End -By Kyle Norland")
-        self.root.geometry("800x600")
+        self.root.wm_title("CASArchitect Front End -By Kyle Norland")
+        self.root.iconbitmap('logo.ico')
+        self.root.geometry("600x600")
+        #self.root.configure(background='yellow')
+        #self.root['bg'] = 'yellow'
 
     def init_zmq(self):
         self.context = zmq.Context()

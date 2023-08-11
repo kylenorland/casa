@@ -57,7 +57,11 @@ class Orc:
     def __init__(self, blockName):
         self.blockName = blockName
         self.initialized = False
-        print("initializing policy orc")  
+        self.e = 0
+        self.i_counter = 0
+        print("initializing policy orc")
+        #self.episode_reward = 0
+        #self.global_rewards = 
     
     def init_zmq(self, subTopics, pubTopics):
         self.context = zmq.Context()
@@ -90,7 +94,10 @@ class Orc:
         #self.env = init_environment(run['env_config'])
         
         #Init the correct stochastic policy
-        self.init_random_hp()
+        if self.run['hyperpolicy'] == 'a_stochastic':
+            print("Using stochastic hyperpolicy")
+            self.init_action_stochastic_hp()    
+        #self.init_random_hp()
         
         self.initialized = True
         
@@ -99,8 +106,8 @@ class Orc:
     def init_random_hp(self):
         #Policy response list
         self.prl = []
-        self.prl.append({'name': 'q_policy', 'recieved': False, 'action':None})
-        self.prl.append({'name': 'random_policy', 'recieved': False, 'action':None})
+        self.prl.append({'name': 'q_policy', 'received': False, 'action':None})
+        self.prl.append({'name': 'random_policy', 'received': False, 'action':None})
         
     def run_random_hp(self, message):
         tag = message['tag']
@@ -110,16 +117,16 @@ class Orc:
             #Add, check if both present, choose randomly.
             for policy in self.prl:
                 if policy['name'] == signal['policy_name']:
-                    policy['recieved'] = True
+                    policy['received'] = True
                     policy['action'] = signal['action']
             
-            all_recieved = True
+            all_received = True
             for policy in self.prl:
-                if not policy['recieved']:
-                    all_recieved = False
+                if not policy['received']:
+                    all_received = False
                     
-            if all_recieved:
-                print("hp got all policy responses")
+            if all_received:
+                #print("hp got all policy responses")
                 #Choose randomly
                 chosen_policy = random.choice(self.prl)
                 action = chosen_policy['action']
@@ -129,67 +136,89 @@ class Orc:
                                     
                 out_message = {"tag": "action", "signal": out_signal}
                 
-                print(self.blockName, 'sending', out_message)
+                #print(self.blockName, 'sending', out_message)
 
                 #Publish it
                 self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                 self.pubSocket.send_json(out_message)
 
-                #Reset the policy recieved flags
+                #Reset the policy received flags
                 for policy in self.prl:
-                    policy['recieved'] = False
+                    policy['received'] = False
                     
-    def init_action_stochastic_hp(self, hp_struct):
-        for entry in hp_struct['policy_objects']:
-            #Should have: policy_name, prob_trajectory
-            
-            new_policy_obj = {
-            'policy_name': entry['policy_name'],
-            'policy': self.instantiate_policy(entry['policy_name']),
-            'prob_trajectory': entry['prob_trajectory'],
-            }
-            
-            #Add to policy list
-            self.hp_struct['policy_objects'].append(copy.deepcopy(new_policy_obj))
+    def init_action_stochastic_hp(self):
+        #Get first hp struct from run details
+        self.hp_struct = self.run['hp_struct']
+        
+        #Set up policy response list.
+        self.prl = []
+        
+        for entry in self.hp_struct['policy_objects']:
+            self.prl.append({'name': entry['policy_name'], 'received': False, 'action':None})
+        
+        #Print prl
+        #print('policy response list')
+        #print(self.prl)
 
             
-    def run_action_stochastic_hp(self, signal):
-        if signal['tag'] == 'action_request':
-            #Random generate based off of prob_trajectories (based on episode for now)
-            message = signal['message']
-            episode = message['episode']
+    def run_action_stochastic_hp(self, message):
+        #print('in action stochastic hp')
+        #print(message)
+        tag = message['tag']
+        signal = message['signal']
+        
+        #print("prl", self.prl)
+        
+        #Working with prl which manages communication
+        #and hp_struct, which holds details for decision.
+        
+        if tag == 'action':
+            #Add, check if both present, choose randomly.
+            for policy in self.prl:
+                if policy['name'] == signal['policy_name']:
+                    policy['received'] = True
+                    policy['action'] = signal['action']
             
-            #Calculate probabilities of each policy
-            prob_array = [x['prob_trajectory'][episode] for x in self.hp_struct['policy_objects']]
+            #Check if all received (Add timer?)
+            all_received = True
+            for policy in self.prl:
+                if not policy['received']:
+                    all_received = False
             
-            #Choose the policy randomly
-            chosen_policy_object = random.choices(self.hp_struct['policy_objects'], prob_array)[0] #First one in returned list
-            chosen_policy = chosen_policy_object['policy']
-            
-            #print("Chosen policy", chosen_policy_object['policy_name'])
-            #print(chosen_policy)
-            #print(chosen_policy['policy_name'])
-            #Add a default policy
-            
-            return chosen_policy.get_action(message['state'])
-            
-        elif signal['tag'] == 'update_info':
-            #Take the pieces out to be used.
-            state = signal['message']['state']
-            action = signal['message']['action']
-            next_state = signal['message']['next_state']
-            reward = signal['message']['reward']
-            done = signal['message']['done']
-            
-            #Send update signal to all  (just Q learning actually updates)
-            for policy_object in self.hp_struct['policy_objects']:
-                policy = policy_object['policy']
-                #Update the policy
-                #print("updating")
-                #print(policy)
-                #print(signal['message'])
-                policy.update_policy(signal['message'])
+            #If all received
+            if all_received:
+                #print("hp got all policy responses")
+                #Choose according to hyperpolicy (Weighted random in this case)
+                #Calculate probabilities of each policy
+                prob_array = [x['prob_trajectory'][self.e] for x in self.hp_struct['policy_objects']]
+                
+                if self.run['debug_mode']: print('prob_array',  prob_array)
+                
+                #Choose the policy randomly
+                chosen_policy_object = random.choices(self.hp_struct['policy_objects'], prob_array)[0] #First one in returned list
+                chosen_policy_name = chosen_policy_object['policy_name']
+                
+                #Get it from the prl
+                chosen_prl_policy = next(item for item in self.prl if item['name'] == chosen_policy_name)
+                
+                
+                action = chosen_prl_policy['action']
+                
+                if self.run['debug_mode']: print('Chosen policy: ', chosen_prl_policy['name'], 'action: ', action)
+                
+                #Send the signal on to the env_wrapper.
+                out_signal = {'action': action}             
+                out_message = {"tag": "action", "signal": out_signal}
+                
+                if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)
+
+                #Reset the policy received flags
+                for policy in self.prl:
+                    policy['received'] = False
 
     def handle_messages(self):
         #print("Preparing to poll")
@@ -203,7 +232,9 @@ class Orc:
             message = socket.recv_json()
             tag = message['tag']
             signal = message['signal']
-
+            
+            #if self.run['debug_mode']: print('policy_orc recieved', message)
+            #print('policy_orc recieved', message)
 
             #--------------Pre Init Actions---------------------
             if topic == "commandChain":
@@ -215,7 +246,7 @@ class Orc:
             
             if message['tag'] == 'init_details':
                 self.run = json.loads(message['signal']['run'])
-                #print('recieved init details')
+                #print('received init details')
 
                 if not self.initialized:
                     #Set up run
@@ -226,24 +257,28 @@ class Orc:
             #----------------Post Init Actions----------------------
             if self.initialized:
                 if message['tag'] == 'step_request':
+                    #Update the current episode and step
+                    self.e = signal['episode']
+                    self.i_counter = signal['step']
+                
                     #Triggered by experiment runner
                     
                     #Request state from env_wrapper    
                     out_message = {"tag": "state_request", "signal": {}}
                     
-                    print(self.blockName, 'sending', message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                     self.pubSocket.send_json(out_message)
                     
                 if message['tag'] == 'state':
-                    #print('Policy orc recieved state')
+                    #print('Policy orc received state')
                     
                     #Send states to policies (Just forward the signal with the details of the state)
                     out_message = {"tag": "state", "signal": message['signal']}
                     
-                    print(self.blockName, 'sending', message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
@@ -251,22 +286,37 @@ class Orc:
 
                     
                 if message['tag'] == 'action':
-                    print('Policy orc recieved action message')
-                    print(signal)
+                    #if self.run['debug_mode']: print('Policy orc received action message')
+                    #if self.run['debug_mode']: print(signal)
                     
-                    self.run_random_hp(message)
+                    if self.run['hyperpolicy'] == 'a_stochastic':
+                        if self.run['debug_mode']: print("using action stochastic hp")
+                        self.run_action_stochastic_hp(message)
+                    else:
+                        self.run_random_hp(message)
                     
                     #self.recieve_action(signal)
                     
                 if message['tag'] == 'update':
                     #Send it on to policies
-                    print('Policy orc recieved update')
+                    if self.run['debug_mode']: print('Policy orc received update')
                     
                     #Respond to the action 
                     #Send action requests to policies (Just forward the signal with the details of the state)
                     out_message = {"tag": "update", "signal": signal}
                     
-                    print(self.blockName, 'sending', message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
+
+                    #Publish it
+                    self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                    self.pubSocket.send_json(out_message) 
+                    
+                if message['tag'] == 'env_reset':
+                    #Send it on to env_wrapper
+                    
+                    out_message = {"tag": "env_reset", "signal": signal}
+                    
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)

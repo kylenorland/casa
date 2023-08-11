@@ -150,15 +150,13 @@ class Env_Wrapper:
             
             if message['tag'] == 'init_details':
                 self.run = json.loads(message['signal']['run'])
-                if not self.initialized:
-                    #Set up run
-                    print("env_wrapper initializing run")
-                    self.init_run_details()
-                    self.initialized = True
+                #Set up run
+                print("env_wrapper initializing run")
+                self.init_run_details()
+                self.initialized = True
                     
             #--------------Post Init Actions Available------------------
             if self.initialized:    
-            
                 #-------------Respond to request for state--------------------
                 if message['tag'] == 'state_request':
                     
@@ -173,24 +171,23 @@ class Env_Wrapper:
                     
                     out_message = {"tag": "state", "signal": signal }
                     
-                    print(self.blockName, 'sending', out_message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                     self.pubSocket.send_json(out_message) 
                     
-
                 #---------------Run action-------------------
                 if message['tag'] == 'action':
-                    print('env wrapper recieved action')
-                    print(tag, signal)
+                    #print('env wrapper recieved action')
+                    #print(tag, signal)
                     
                     #Respond to the action
                     #Run the action on the environment.
                     
                     #------------RUN ACTION--------------------
                     action = signal['action']
-                    print("Env taking action", action)
+                    #print("Env taking action", action)
                     next_state, reward, done, _ = self.env.step(int(action))
                     
                     #-------------Send Updated State after Action is Run-----------------
@@ -206,7 +203,7 @@ class Env_Wrapper:
                     #Send out a state_update
                     out_message = {"tag": "update", "signal": signal }
                     
-                    print(self.blockName, 'sending', out_message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
@@ -215,10 +212,15 @@ class Env_Wrapper:
                     #Update state
                     self.state = int(next_state)
                     
+                    '''
                     #Reset if done?
                     if done:
                         self.state = int(env.reset())
-                
+                    '''
+                        
+                if message['tag'] == 'env_reset':
+                    #Reset env
+                    self.state = int(self.env.reset())
 
 #---------------------Initialize -----------------------
 #Init Core

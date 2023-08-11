@@ -24,6 +24,8 @@ import copy
 import numpy as np
 import seaborn as sns           #For plotting style
 import os
+import asyncio
+import matplotlib.pyplot as plt
 
 #Defaults:
 proxyInputPort = 8000
@@ -72,71 +74,6 @@ class MyEncoder(json.JSONEncoder):
         else:
             return super(MyEncoder, self).default(obj)
 
-default_run = {}
-
-#---------Env Settings------------
-#Env Config
-default_run['env_config'] = {}
-default_run['env_config']['env_map'] = np.array([[0,0,0,0,0],
-                        [0,1,0,1,0],
-                        [0,0,0,1,0],
-                        [0,1,0,0,1],
-                        [0,0,1,0,0]])
-#default_run['env_config']['env_name'] = 'FrozenLake-v1'
-default_run['env_config']['env_name'] = 'vector_grid_goal'                        
-default_run['env_config']['grid_dims'] = (len(default_run['env_config']['env_map'][0]),len(default_run['env_config']['env_map'][1]))
-default_run['env_config']['player_location'] = (0,0)
-default_run['env_config']['goal_location'] = (default_run['env_config']['grid_dims'][0] - 1, default_run['env_config']['grid_dims'][1] - 1)  
-print(default_run['env_config']['grid_dims'] ,  default_run['env_config']['goal_location'])   
-
-#----------Stochastic Controls--------------
-default_run['seed'] = 6000
-
-#------------Training Loop Controls-----------
-default_run['n_episodes'] = 4000
-default_run['max_steps'] = 30
-
-#-------------Visualization Controls------------------
-#sns.set(style='darkgrid')
-default_run['visualizer'] = False
-default_run['vis_steps'] = False             #Visualize every step
-default_run['vis_frequency'] = 100           #Visualize every x episodes
-
-#-------------Output Controls-----------------------
-default_run['output_path'] = 'multi_policy_output'
-if not os.path.exists(default_run['output_path']):
-    os.makedirs(default_run['output_path'], exist_ok = True) 
-
-default_run['output_dict'] = {} 
-
-#--------------------------------------
-#----------Policy Controls-------------
-#--------------------------------------
-#-----------orc_controls---------------
-default_run['hyperpolicy'] = 'a_stochastic'
-
-#-----------Q_Policy Control---------
-default_run['gamma'] = 0.9             #discount factor 0.9
-default_run['lr'] = 0.3                 #learning rate 0.1
-
-#-----------Random Policy Control---------------
-default_run['max_epsilon'] = 1              #initialize the exploration probability to 1
-default_run['epsilon_decay'] = 0.001        #exploration decreasing decay for exponential decreasing
-default_run['min_epsilon'] = 0.001
-
-#-------------Analytic Policy Control---------------
-default_run["mip_flag"] = True
-default_run["cycle_flag"] = True
-default_run['analytic_policy_update_frequency'] = 500
-default_run['random_endpoints'] = False
-default_run['reward_endpoints'] = True
-default_run['analytic_policy_active'] = False
-default_run['analytic_policy_chance'] = 0.0  
-
-
-
-#-------------make a sample run--------------------
-run = copy.deepcopy(default_run)
 
 #------------------------------------------------
 #--------------Declare the class and helper functions-----------------
@@ -146,6 +83,23 @@ class Experiment_Runner:
     def __init__(self, blockName):
         self.blockName = blockName
         self.last_init_time = time.time()
+        self.init_message_sent = False
+        self.episode_mode = False
+        self.run_mode = False
+        #self.update_recieved = False
+        self.run_done = False
+        
+        #-------Tracking variables----------------
+        self.e = 0
+        self.i_counter = 0
+        
+        
+        #-------Performance Measures----------------
+        self.episode_reward  = 0
+        #Episode done
+        self.done = False
+        self.reward_per_episode = []
+
 
         print("initializing experiment runner") 
         
@@ -171,7 +125,132 @@ class Experiment_Runner:
         #-----------------Set up poller------------------------- 
         #(Some code from: https://learning-0mq-with-pyzmq.readthedocs.io/en/latest/pyzmq/multisocket/zmqpoller.html)
         self.poller = zmq.Poller()
-        self.poller.register(self.subSocket, zmq.POLLIN)    
+        self.poller.register(self.subSocket, zmq.POLLIN)   
+
+    def update_handler(self, signal):
+        update_info = signal['update_info']
+        state = int(update_info['state'])
+        action = update_info['action']
+        self.next_state = int(update_info['next_state'])
+        reward = update_info['reward']
+        self.done = update_info['done'] 
+        
+        #print("exp runner got update")
+        #print(signal)
+
+        self.episode_reward += reward    #Increment reward   
+        self.state = self.next_state
+        
+        #Update internal variables
+        #Update step counter.
+        self.i_counter += 1
+        '''
+        if self.e % 10 == 0 and self.e != 0:
+            print("-" * 10)
+            print("episode", self.e, "step:", self.i_counter)
+        '''
+        #print("into update handler")
+        #--------------------------------------------------------
+        #If at max step or is done, then record reward and reset.
+        #--------------------------------------------------------
+        if self.i_counter > self.run['max_steps'] or self.done == True:
+            #Add reward to run reward record
+            self.reward_per_episode.append(self.episode_reward)
+            
+            #Reset episode reward
+            self.episode_reward = 0
+            
+            #Reset counter
+            self.i_counter = 0
+            
+            #Increment episode
+            self.e += 1
+            #print("episode_counter", self.e)
+            
+            if self.e >= self.run['n_episodes']:
+                #Done with experiment
+                #-------------Send output messages to visualizer-----------------
+                print("sending output to visualizer")
+
+                out_message = {"tag": "run_results", "signal": {'reward_per_episode': self.reward_per_episode}}
+                
+                print(self.blockName, 'sending', out_message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message) 
+
+                #------------Send message back to experiment hyper-runner----------------
+                print("Done with run")                
+                print("sending output to experiment generator")
+
+                out_message = {"tag": "run_complete", "signal": {'reward_per_episode': self.reward_per_episode}}
+                
+                print(self.blockName, 'sending', out_message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)     
+
+                
+                #Run done
+                self.run_done = True    
+                
+            else: 
+                #Send env_reset message.
+                out_message = {"tag": "env_reset", "signal": {'reset': 'yes'}}
+                
+                #print(self.blockName, 'sending', out_message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message) 
+                
+                #-----------------------
+                #-------Run Request-----
+                #-----------------------
+                #if a run was requested and the run isn't over 
+                #send another step request after the episode finishes
+                if self.run_mode and not self.run_done:
+                    #Send step request with signal for new episode.
+                    out_signal = {'step': self.i_counter, 'episode': self.e}
+                    out_message = {"tag": "step_request", "signal": out_signal }
+                    #print("sending run request from experiment runner")
+                    #print(self.blockName, 'sending', out_message)
+
+                    #Publish it
+                    self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                    self.pubSocket.send_json(out_message)       
+                    
+                    #End of episode actions
+                    if self.e % 5 == 0 and self.e != 0:
+                        print("-" * 10)
+                        print("episode", self.e)
+                        
+                        print("Probabilities")
+                        print([policy_object['prob_trajectory'][self.e] for policy_object in self.run['hp_struct']['policy_objects']])
+             
+
+                    
+        #--------------------------------------------
+        #------------Episode_request-----------------
+        #--------------------------------------------
+        #If not at end of episode and episode requested , send another one.
+        else:
+            if (self.episode_mode or self.run_mode) and not self.run_done:
+                #Send step request with signal for new episode.
+                out_signal = {'step': self.i_counter, 'episode': self.e}
+                out_message = {"tag": "step_request", "signal": out_signal }
+                
+                if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)
+                
+
+        
+        #if self.run_mode and not self.run_done:   
 
     def handle_messages(self):
         #----Poll-------------
@@ -184,28 +263,127 @@ class Experiment_Runner:
             message = socket.recv_json()
             tag = message['tag']
             signal = message['signal']
+            
+            #print("Runner got: ", message)
 
-            #print(self.blockName, 'recieved ',  message)
             #--------------Check if its a command argument-----------
             if topic == "commandChain":
                 if message['command'] == 'stop':
                 #Shut down.
                     keepRunning = False
                     print("Generator shutting down")
-                
+                    
+            #----------------Update Information-------------------
+            if tag == 'update':
+                #Save
+                self.update_handler(signal)   
                 
             #-----------------Button Click------------------------
-            if message['tag'] == 'step_request':
-                #Send a step request to the policy orc
-                out_message = {"tag": "step_request", "signal": signal }
+            if tag == 'step_request':   
+                #Send step request with signal for new episode.
+                out_signal = {'step': self.i_counter, 'episode': self.e}
+                out_message = {"tag": "step_request", "signal": out_signal }
                 
-                print(self.blockName, 'sending', message)
+                if self.run['debug_mode']: print(self.blockName, 'sending', message)
 
                 #Publish it
                 self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                 self.pubSocket.send_json(out_message)
+                
+                if self.init_message_sent == False:
+                    run_json = json.dumps(run, cls=MyEncoder)
 
+                    out_message = {"tag": "init_details", "signal": {'run': run_json}}
+                    
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message['tag'])
 
+                    #Publish it
+                    self.pubSocket.send_string('init_details', zmq.SNDMORE)
+                    self.pubSocket.send_json(out_message)
+                    
+                    #Set init sent to true
+                    self.init_message_sent = True
+                    
+            if tag == 'episode_request':
+                if self.init_message_sent == False:
+                    run_json = json.dumps(run, cls=MyEncoder)
+
+                    out_message = {"tag": "init_details", "signal": {'run': run_json}}
+                    
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message['tag'])
+
+                    #Publish it
+                    self.pubSocket.send_string('init_details', zmq.SNDMORE)
+                    self.pubSocket.send_json(out_message)
+                    
+                    #Set init sent to true
+                    self.init_message_sent = True
+                    
+                    #Wait for a second for all to initialize
+                    time.sleep(1)
+                    
+                #Change to episode mode
+                self.episode_mode = True
+                
+                #Trigger the loop with a step_request
+                out_signal = {'step': self.i_counter, 'episode': self.e}
+                out_message = {"tag": "step_request", "signal": out_signal }
+                
+                if self.run['debug_mode']: print(self.blockName, 'sending', message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)   
+            
+            if tag == 'run_request':
+                #Reset variables
+                self.e = 0
+                self.i_counter = 0
+                self.reward_per_episode = []
+                self.episode_reward = 0
+                self.done = False
+                self.run_done = False
+                
+                #Reset run to be the new one.
+                self.run = json.loads(signal['run'])
+                
+                #Sends out the run to other blocks.
+            
+                run_json = json.dumps(self.run, cls=MyEncoder)
+
+                out_message = {"tag": "init_details", "signal": {'run': run_json}}
+                
+                if self.run['debug_mode']: print(self.blockName, 'sending', out_message['tag'])
+
+                #Publish it
+                self.pubSocket.send_string('init_details', zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)
+                
+                #Set init sent to true
+                self.init_message_sent = True
+                
+                #Wait for a second for all to initialize
+                time.sleep(2)
+                    
+                #Change to episode mode
+                self.run_mode = True
+                
+                #-------------Trigger the loop with a step_request---------------------
+                print("Experiment runner triggering loop")
+                out_signal = {'step': self.i_counter, 'episode': self.e}
+                out_message = {"tag": "step_request", "signal": out_signal }
+                
+                #if self.run['debug_mode']: print(self.blockName, 'sending', message)
+                print(self.blockName, 'sending', out_message)
+
+                #Publish it
+                self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
+                self.pubSocket.send_json(out_message)  
+                
+
+                
+        
+        '''
         #If time elapsed is greater than x milliseconds, send out init message            
         if (time.time() - self.last_init_time) > 5:
             run_json = json.dumps(run, cls=MyEncoder)
@@ -220,6 +398,7 @@ class Experiment_Runner:
             
             #update the last time it was fired.
             self.last_init_time = time.time()
+        '''
 
 #---------------------Initialize -----------------------
 #Init Core

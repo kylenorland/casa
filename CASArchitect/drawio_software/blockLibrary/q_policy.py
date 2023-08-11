@@ -86,7 +86,6 @@ class Q_Policy:
         #def load_run_details(self, run, env):
     
     def init_run_details(self, run):
-    
         #Init the environment
         self.run = run
         
@@ -94,7 +93,10 @@ class Q_Policy:
         for k, v in run.items():
             setattr(self, k, v)  
 
-        self.initialized = True             
+        self.initialized = True
+        
+        #Reset q_table
+        self.q_table_initialized = False
         
         #self.hp_struct = {'policy_objects': []}
         
@@ -103,6 +105,7 @@ class Q_Policy:
         self.n_observations = env_details['n_observations']
         self.n_actions = env_details['n_actions']
         self.Q_table = np.zeros((self.n_observations,self.n_actions))
+        self.q_table_initialized = True
         
     def get_action(self, state):
         return np.argmax(self.Q_table[state,:])
@@ -117,9 +120,13 @@ class Q_Policy:
         next_state = update_info['next_state']
         reward = update_info['reward']
         done = update_info['done']
+        
+        #print("update info")
+        #print(update_info)
     
         #Update Q_table
         self.Q_table[state, action] = self.Q_table[state, action] + self.lr*(reward + self.gamma*max(self.Q_table[next_state,:]) - self.Q_table[state, action])  
+        
         '''
         #Print Q Table
         print("Q table")
@@ -131,7 +138,7 @@ class Q_Policy:
             #print(i, ':', row)
             print(row_print)
         
-        input("Stop")
+        #input("Stop")
         '''    
                     
     def handle_messages(self):
@@ -156,40 +163,41 @@ class Q_Policy:
                 self.run = json.loads(message['signal']['run'])
                 #print('recieved init details')
 
-                if not self.initialized:
-                    #Set up run
-                    print("q_policy initializing run")
-                    self.init_run_details(self.run)
-                    self.initialized = True
+
+                #Set up run
+                print("q_policy initializing run")
+                self.init_run_details(self.run)
+                self.initialized = True
                     
             #-------------Post Init Actions----------------------
             if self.initialized:
                 tag = message['tag']
                 signal = message['signal']
                 if message['tag'] =='state':
-                    print('q_policy recieved state')
+                    #print('q_policy recieved state')
                     
                     
                     #Initialize q table if not done already
                     if not self.q_table_initialized:
                         self.init_q_table(signal['env_details'])
+                        self.q_table_initialized = True
                     
-                    print("q responding to state")
+                    #print("q responding to state")
                     #Convert the action to an int
                     action = int(self.get_action(signal['state']))
                     
                     #Reply with suggested action
                     out_message = {"tag": "action", "signal": {'action': action, 'policy_name': 'q_policy'}}
                     
-                    print(self.blockName, 'sending', out_message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                     self.pubSocket.send_json(out_message) 
                     
                 if message['tag'] == 'update':
-                    print('q_policy recieved update message')
-                    print(signal)
+                    #print('q_policy recieved update message')
+                    #print(signal)
                     self.update_policy(signal)
                     
                     

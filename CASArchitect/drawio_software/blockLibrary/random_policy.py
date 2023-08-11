@@ -87,7 +87,6 @@ class Random_Policy:
         #def load_run_details(self, run, env):
     
     def init_run_details(self, run):
-    
         #Init the environment
         self.run = run
         
@@ -100,7 +99,6 @@ class Random_Policy:
         #self.hp_struct = {'policy_objects': []}
         
 
-        
     def get_action(self, signal):
         #Init the Q_table
         self.n_observations = signal['env_details']['n_observations']
@@ -134,18 +132,17 @@ class Random_Policy:
                 self.run = json.loads(message['signal']['run'])
                 #print('recieved init details')
 
-                if not self.initialized:
-                    #Set up run
-                    print("q_policy initializing run")
-                    self.init_run_details(self.run)
-                    self.initialized = True
+                #Set up run
+                print("random_policy initializing run")
+                self.init_run_details(self.run)
+                self.initialized = True
                     
             #-------------Post Init Actions----------------------
             if self.initialized:
                 tag = message['tag']
                 signal = message['signal']
                 if message['tag'] =='state':
-                    print('random_policy recieved state')
+                    #print('random_policy recieved state')
                     
                     #print("random policy responding to state")
                     #Convert the action to an int
@@ -154,15 +151,15 @@ class Random_Policy:
                     #Reply with suggested action
                     out_message = {"tag": "action", "signal": {'action': action, 'policy_name': 'random_policy'}}
                     
-                    print(self.blockName, 'sending', out_message)
+                    if self.run['debug_mode']: print(self.blockName, 'sending', out_message)
 
                     #Publish it
                     self.pubSocket.send_string(pubTopics[0], zmq.SNDMORE)
                     self.pubSocket.send_json(out_message) 
                     
                 if message['tag'] == 'update':
-                    print('random_policy recieved update message')
-                    print(signal)
+                    #print('random_policy recieved update message')
+                    #print(signal)
                     
                     self.update_policy(signal)
                     
